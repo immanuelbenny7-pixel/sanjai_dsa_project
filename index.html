@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STREET RACER: ALGORITHM WARS</title>
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+  <div id="game-container">
+    <!-- Real-time 3D Three.js WebGL Canvas -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- ========================================================
+         MAIN MENU
+         ======================================================== -->
+    <div id="main-menu" class="interactive" style="display: flex;">
+      <div class="menu-header">
+        <h1 class="game-title">STREET RACER</h1>
+        <h2 class="game-subtitle">ALGORITHM WARS</h2>
+      </div>
+
+      <div class="menu-nav">
+        <button id="btn-play" class="cyber-btn" type="button" onclick="window.playRace()">PLAY RACE</button>
+        <button id="btn-dsa-lab" class="cyber-btn accent-orange" type="button" onclick="window.openDSALab()">DSA LAB</button>
+        <button id="btn-garage" class="cyber-btn" type="button" onclick="window.openGarage()">GARAGE</button>
+        <button id="btn-how-to-play" class="cyber-btn" type="button" onclick="window.openHowToPlay()">HOW TO PLAY</button>
+        <button id="btn-settings" class="cyber-btn" type="button" onclick="window.openSettings()">SETTINGS</button>
+      </div>
+
+      <div class="menu-footer">
+        <span>3D Arcade Racing + 4 Live DSA Implementations</span>
+        <span>Built with Three.js & WebGL</span>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         GARAGE SCREEN
+         ======================================================== -->
+    <div id="garage-screen" class="interactive" style="display: none;">
+      <div class="menu-header">
+        <h1 class="game-title" style="font-size:2.4rem;">STREET RACER</h1>
+        <h2 class="game-subtitle">VEHICLE SHOWROOM</h2>
+      </div>
+
+      <div class="garage-sidebar glass-panel">
+        <h3 id="garage-car-name" class="car-name-title">Factory GT</h3>
+        <p id="garage-car-desc" class="car-desc">Balanced cyber street machine with optimal handling and speed.</p>
+
+        <div class="stat-row">
+          <div class="stat-label-val"><span>TOP SPEED</span></div>
+          <div class="stat-bar"><div id="bar-speed" class="stat-fill" style="width: 85%;"></div></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-label-val"><span>ACCELERATION</span></div>
+          <div class="stat-bar"><div id="bar-accel" class="stat-fill" style="width: 80%;"></div></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-label-val"><span>HANDLING</span></div>
+          <div class="stat-bar"><div id="bar-handling" class="stat-fill" style="width: 80%;"></div></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-label-val"><span>BRAKING</span></div>
+          <div class="stat-bar"><div id="bar-brake" class="stat-fill" style="width: 80%;"></div></div>
+        </div>
+
+        <div class="stat-label-val" style="margin-top:10px;"><span>SELECT VEHICLE:</span></div>
+        <div id="garage-car-switcher" class="car-switcher-bar"></div>
+
+        <div style="display:flex;gap:12px;margin-top:15px;">
+          <button id="btn-select-car" class="cyber-btn" style="flex:1;">SELECT VEHICLE</button>
+          <button id="btn-garage-back" class="cyber-btn accent-orange">BACK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         RACING HUD
+         ======================================================== -->
+    <div id="racing-hud" style="display: none;">
+      <!-- Top-Left: Position, Lap, Timer -->
+      <div class="hud-top-left glass-panel" style="padding:14px 20px;">
+        <div class="hud-pos-box">
+          <span id="hud-pos-val" class="pos-number">1</span>
+          <span id="hud-pos-suffix" class="pos-suffix">ST</span>
+          <span class="pos-total">/ 4</span>
+        </div>
+        <div class="hud-lap-timer">
+          <div>LAP: <span id="hud-lap-val" class="hud-lap-val">1 / 3</span></div>
+          <div>TIME: <span id="hud-timer-val" class="hud-timer-val">00:00.000</span></div>
+        </div>
+      </div>
+
+      <!-- Top-Center: Countdown & Announcements -->
+      <div class="hud-top-center">
+        <div id="countdown-banner" class="countdown-banner" style="display:none;">3</div>
+        <div id="hud-banner-msg" class="hud-banner-msg"></div>
+        <div id="hud-combat-msg" class="hud-combat-msg" style="display:none;">HIT!</div>
+      </div>
+
+      <!-- Top-Right: Minimap & DSA Toggle -->
+      <div class="hud-top-right">
+        <canvas id="minimap-canvas" width="190" height="190"></canvas>
+        <button id="dsa-hud-toggle" class="dsa-hud-toggle-btn">DSA TELEMETRY [T]</button>
+      </div>
+
+      <!-- Floating DSA Telemetry Drawer -->
+      <div id="dsa-telemetry-panel" class="glass-panel">
+        <h4 class="dsa-title">ACTIVE DSA PIPELINE</h4>
+        <div id="dsa-telemetry-content"></div>
+      </div>
+
+      <!-- Bottom-Left: Speedometer & Combat Weapons Console -->
+      <div class="hud-bottom-left">
+        <div class="speedo-cluster glass-panel">
+          <div style="display:flex;align-items:baseline;gap:6px;">
+            <span id="speedo-num" class="speedo-num">0</span>
+            <span class="speedo-unit">KM/H</span>
+          </div>
+          <div class="speedo-bar-container">
+            <div id="speedo-bar-fill" class="speedo-bar-fill"></div>
+          </div>
+        </div>
+
+        <div class="combat-cluster glass-panel">
+          <div class="combat-header">
+            <span class="combat-title">ENERGY WEAPON [F]</span>
+            <span id="hud-weapon-status" class="weapon-status-ready">READY</span>
+          </div>
+          <div class="combat-ammo-row">
+            <span>AMMO:</span>
+            <span class="ammo-num"><strong id="hud-ammo-val">30</strong> / <span id="hud-ammo-max">50</span></span>
+          </div>
+          <div class="hud-bar-container">
+            <div id="cooldown-bar-fill" class="cooldown-bar-fill" style="width: 100%;"></div>
+          </div>
+          <div class="combat-shield-row" style="margin-top:6px;">
+            <span>SHIELD:</span>
+            <span class="shield-num"><strong id="hud-shield-val">100</strong>%</span>
+          </div>
+          <div class="hud-bar-container">
+            <div id="shield-bar-fill" class="shield-bar-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom-Center: Controls & Drift -->
+      <div class="hud-bottom-center">
+        <div id="drift-badge" class="drift-badge">DRIFT +100</div>
+        <div class="controls-hint">
+          [W/&uarr;] Gas &nbsp;|&nbsp; [S/&darr;] Brake &nbsp;|&nbsp; [A/D] Steer &nbsp;|&nbsp; [F] Fire Laser &nbsp;|&nbsp; [SPACE] Drift &nbsp;|&nbsp; [R] Recover
+        </div>
+      </div>
+
+      <!-- Bottom-Right: Live Leaderboard (Merge Sort) -->
+      <div class="hud-bottom-right">
+        <div class="leaderboard-table glass-panel">
+          <div class="lb-title">
+            <span>MERGE SORT LEADERBOARD</span>
+            <span style="color:#7f8fa4;font-size:0.75rem;">O(N log N)</span>
+          </div>
+          <div id="leaderboard-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         DSA LAB SCREEN
+         ======================================================== -->
+    <div id="dsa-lab-screen" class="interactive" style="display: none;">
+      <div class="lab-header">
+        <div>
+          <h2 class="game-title" style="font-size:1.8rem;">DSA LAB & VISUALIZATION</h2>
+          <span style="color:var(--text-dim);font-size:0.95rem;">Interactive analysis of algorithms controlling game physics & navigation</span>
+        </div>
+        <div class="lab-tabs">
+          <button class="lab-tab-btn active" data-tab="graph">1. GRAPH & DIJKSTRA</button>
+          <button class="lab-tab-btn" data-tab="heap">2. MIN-HEAP</button>
+          <button class="lab-tab-btn" data-tab="queue">3. FIFO QUEUE</button>
+          <button class="lab-tab-btn" data-tab="sort">4. MERGE SORT</button>
+          <button id="btn-dsa-back" class="cyber-btn accent-orange" style="padding:8px 18px;margin-left:15px;">BACK TO MENU</button>
+        </div>
+      </div>
+
+      <div class="lab-content-area">
+        <!-- PANE 1: GRAPH & DIJKSTRA -->
+        <div id="tab-pane-graph" class="tab-pane active">
+          <div class="lab-split">
+            <div class="canvas-viewport">
+              <canvas id="canvas-dsa-graph" class="dsa-canvas"></canvas>
+            </div>
+            <div class="lab-controls-panel glass-panel">
+              <h3 style="font-family:var(--font-racing);color:var(--neon-cyan);font-size:1.1rem;">Shortest Path Finder</h3>
+              <p style="color:var(--text-dim);font-size:0.9rem;">
+                Computes the optimal path through the circuit vertices and alternative shortcuts using Dijkstra's algorithm backed by MinHeap priority queue.
+              </p>
+
+              <div>
+                <label style="font-size:0.85rem;color:var(--text-dim);">START CHECKPOINT:</label>
+                <select id="dijkstra-start-select" style="width:100%;padding:8px;background:#0d1420;color:#fff;border:1px solid var(--panel-border);border-radius:4px;margin-top:4px;"></select>
+              </div>
+
+              <div>
+                <label style="font-size:0.85rem;color:var(--text-dim);">TARGET CHECKPOINT:</label>
+                <select id="dijkstra-target-select" style="width:100%;padding:8px;background:#0d1420;color:#fff;border:1px solid var(--panel-border);border-radius:4px;margin-top:4px;"></select>
+              </div>
+
+              <div style="display:flex;gap:8px;">
+                <button id="btn-run-dijkstra" class="cyber-btn" style="flex:1;padding:10px;">RUN DIJKSTRA</button>
+                <button id="btn-step-dijkstra" class="cyber-btn accent-orange" style="padding:10px 16px;">STEP</button>
+                <button id="btn-reset-dijkstra" class="cyber-btn" style="padding:10px 16px;">RESET</button>
+              </div>
+
+              <div class="dsa-metric-card">
+                <div class="dsa-metric-title">TOTAL ROUTE DISTANCE</div>
+                <div id="dijkstra-total-cost" class="dsa-metric-val">0 m</div>
+              </div>
+
+              <div class="dsa-metric-card">
+                <div class="dsa-metric-title">CALCULATED PATH</div>
+                <div id="dijkstra-path-display" style="font-size:0.9rem;color:#00ff88;margin-top:4px;">None</div>
+              </div>
+
+              <div class="dsa-metric-card" style="border-left-color:var(--neon-gold);">
+                <div class="dsa-metric-title">STEP EXECUTION LOG</div>
+                <div id="dijkstra-step-log" style="font-size:0.85rem;color:#ddd;margin-top:4px;line-height:1.4;">Ready.</div>
+              </div>
+
+              <div style="font-size:0.8rem;color:var(--text-dim);border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                Time Complexity: <strong>O((V + E) log V)</strong> | Space: <strong>O(V)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 2: MIN-HEAP -->
+        <div id="tab-pane-heap" class="tab-pane">
+          <div class="lab-split">
+            <div class="canvas-viewport">
+              <canvas id="canvas-dsa-heap" class="dsa-canvas"></canvas>
+            </div>
+            <div class="lab-controls-panel glass-panel">
+              <h3 style="font-family:var(--font-racing);color:var(--neon-green);font-size:1.1rem;">Min-Heap Priority Queue</h3>
+              <p style="color:var(--text-dim);font-size:0.9rem;">
+                Maintains binary tree invariant where parent is always smaller than children. Dijkstra uses this to extract the minimum tentative distance in O(log n).
+              </p>
+
+              <div>
+                <label style="font-size:0.85rem;color:var(--text-dim);">CHECKPOINT ID & DISTANCE:</label>
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                  <input id="heap-input-id" type="text" placeholder="CP_ID" value="CP_NEW" style="flex:1;padding:8px;background:#0d1420;color:#fff;border:1px solid var(--panel-border);border-radius:4px;" />
+                  <input id="heap-input-dist" type="number" placeholder="Distance" value="75" style="width:90px;padding:8px;background:#0d1420;color:#fff;border:1px solid var(--panel-border);border-radius:4px;" />
+                </div>
+              </div>
+
+              <div style="display:flex;gap:8px;">
+                <button id="btn-heap-insert" class="cyber-btn" style="flex:1;padding:10px;">INSERT</button>
+                <button id="btn-heap-extract" class="cyber-btn accent-orange" style="flex:1;padding:10px;">EXTRACT-MIN</button>
+                <button id="btn-heap-reset" class="cyber-btn" style="padding:10px 14px;">RESET</button>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">HEAP SIZE</div>
+                  <div id="heap-stat-size" class="dsa-metric-val">0</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">MIN ROOT</div>
+                  <div id="heap-stat-min" class="dsa-metric-val" style="font-size:1.1rem;">None</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">COMPARISONS</div>
+                  <div id="heap-stat-comp" class="dsa-metric-val">0</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">SWAPS</div>
+                  <div id="heap-stat-swaps" class="dsa-metric-val">0</div>
+                </div>
+              </div>
+
+              <div style="font-size:0.8rem;color:var(--text-dim);border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                Insert: <strong>O(log n)</strong> | ExtractMin: <strong>O(log n)</strong> | Peek: <strong>O(1)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 3: FIFO QUEUE -->
+        <div id="tab-pane-queue" class="tab-pane">
+          <div class="lab-split">
+            <div class="canvas-viewport">
+              <canvas id="canvas-dsa-queue" class="dsa-canvas"></canvas>
+            </div>
+            <div class="lab-controls-panel glass-panel">
+              <h3 style="font-family:var(--font-racing);color:var(--neon-orange);font-size:1.1rem;">Starting Grid FIFO Queue</h3>
+              <p style="color:var(--text-dim);font-size:0.9rem;">
+                Circular array buffer implementation managing the starting grid order and racer release sequence in strict FIFO order without Array.shift().
+              </p>
+
+              <div>
+                <label style="font-size:0.85rem;color:var(--text-dim);">RACER NAME:</label>
+                <input id="queue-input-name" type="text" placeholder="Racer Name" value="Phantom" style="width:100%;padding:8px;background:#0d1420;color:#fff;border:1px solid var(--panel-border);border-radius:4px;margin-top:4px;" />
+              </div>
+
+              <div style="display:flex;gap:8px;">
+                <button id="btn-queue-enq" class="cyber-btn" style="flex:1;padding:10px;">ENQUEUE</button>
+                <button id="btn-queue-deq" class="cyber-btn accent-orange" style="flex:1;padding:10px;">DEQUEUE (RELEASE)</button>
+                <button id="btn-queue-reset" class="cyber-btn" style="padding:10px 14px;">RESET</button>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">ACTIVE RACERS</div>
+                  <div id="queue-stat-size" class="dsa-metric-val">0</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">CAPACITY</div>
+                  <div id="queue-stat-cap" class="dsa-metric-val">8</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">HEAD (FRONT)</div>
+                  <div id="queue-stat-head" class="dsa-metric-val" style="font-size:1.1rem;">Index 0</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">TAIL (REAR)</div>
+                  <div id="queue-stat-tail" class="dsa-metric-val" style="font-size:1.1rem;">Index 0</div>
+                </div>
+              </div>
+
+              <div style="font-size:0.8rem;color:var(--text-dim);border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                Enqueue: <strong>O(1)</strong> | Dequeue: <strong>O(1)</strong> | Peek: <strong>O(1)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 4: MERGE SORT -->
+        <div id="tab-pane-sort" class="tab-pane">
+          <div class="lab-split">
+            <div class="canvas-viewport">
+              <canvas id="canvas-dsa-sort" class="dsa-canvas"></canvas>
+            </div>
+            <div class="lab-controls-panel glass-panel">
+              <h3 style="font-family:var(--font-racing);color:var(--neon-purple);font-size:1.1rem;">Merge Sort Leaderboard</h3>
+              <p style="color:var(--text-dim);font-size:0.9rem;">
+                Divide-and-conquer algorithm ranking racers based on finished status, completed laps, circuit progress, and tie-breaking.
+              </p>
+
+              <div style="display:flex;gap:8px;">
+                <button id="btn-sort-run" class="cyber-btn" style="flex:1;padding:10px;">RUN MERGE SORT</button>
+                <button id="btn-sort-step" class="cyber-btn accent-orange" style="padding:10px 16px;">STEP</button>
+                <button id="btn-sort-reset" class="cyber-btn" style="padding:10px 16px;">RESET</button>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">COMPARISONS</div>
+                  <div id="sort-stat-comp" class="dsa-metric-val">0</div>
+                </div>
+                <div class="dsa-metric-card">
+                  <div class="dsa-metric-title">ARRAY WRITES</div>
+                  <div id="sort-stat-writes" class="dsa-metric-val">0</div>
+                </div>
+              </div>
+
+              <div class="dsa-metric-card" style="border-left-color:var(--neon-cyan);">
+                <div class="dsa-metric-title">STEP EXECUTION LOG</div>
+                <div id="sort-step-log" style="font-size:0.85rem;color:#ddd;margin-top:4px;line-height:1.4;">Ready.</div>
+              </div>
+
+              <div style="font-size:0.8rem;color:var(--text-dim);border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                Best, Average, Worst: <strong>O(n log n)</strong> | Space: <strong>O(n)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         RESULTS SCREEN
+         ======================================================== -->
+    <div id="results-screen" style="display: none;">
+      <div class="results-modal glass-panel">
+        <h2 id="results-title" class="results-title">VICTORY!</h2>
+        
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>POS</th>
+              <th>RACER</th>
+              <th>LAPS</th>
+              <th>TIME</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+
+        <div style="display:flex;gap:20px;width:100%;justify-content:space-around;font-size:1.1rem;">
+          <div>BEST LAP: <strong id="results-best-lap" style="color:var(--neon-green);">00:00.000</strong></div>
+          <div>TOTAL TIME: <strong id="results-total-time" style="color:var(--neon-cyan);">00:00.000</strong></div>
+        </div>
+
+        <div class="results-actions">
+          <button id="btn-results-restart" class="cyber-btn">RACE AGAIN</button>
+          <button id="btn-results-menu" class="cyber-btn accent-orange">MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         HOW TO PLAY MODAL
+         ======================================================== -->
+    <div id="modal-how-to-play" class="modal-overlay" style="display: none;">
+      <div class="modal-box glass-panel">
+        <h2 style="font-family:var(--font-racing);color:var(--neon-cyan);">HOW TO PLAY</h2>
+        <p><strong>Controls:</strong></p>
+        <ul style="padding-left:20px;line-height:1.6;color:#ccc;">
+          <li><strong style="color:#fff;">W / Arrow Up:</strong> Accelerate</li>
+          <li><strong style="color:#fff;">S / Arrow Down:</strong> Brake / Reverse</li>
+          <li><strong style="color:#fff;">A / Arrow Left:</strong> Steer Left</li>
+          <li><strong style="color:#fff;">D / Arrow Right:</strong> Steer Right</li>
+          <li><strong style="color:#00f0ff;">F:</strong> Fire Energy Laser (Combat System)</li>
+          <li><strong style="color:#fff;">SPACE:</strong> Handbrake / Initiate Drift</li>
+          <li><strong style="color:#fff;">R:</strong> Recover car to last checkpoint</li>
+          <li><strong style="color:#fff;">ESC:</strong> Pause / Resume</li>
+        </ul>
+        <p style="margin-top:8px;"><strong>Data Structures & Algorithms in Action:</strong></p>
+        <ol style="padding-left:20px;line-height:1.6;color:#ccc;">
+          <li><strong style="color:#00f0ff;">Graph + Dijkstra:</strong> Track checkpoints form a weighted graph. AI cars compute optimal paths and navigate shortcuts.</li>
+          <li><strong style="color:#00ff88;">MinHeap:</strong> Priority queue used by Dijkstra to extract nearest checkpoints in O(log n).</li>
+          <li><strong style="color:#ff6600;">FIFO Queue:</strong> Circular buffer controlling starting grid order and racer release.</li>
+          <li><strong style="color:#9d00ff;">Merge Sort:</strong> Divide-and-conquer algorithm ranking racers by laps and circuit progress.</li>
+          <li><strong style="color:#00f0ff;">Object Pool:</strong> High-performance O(1) recycling array pool managing 3D combat energy projectiles without memory leaks.</li>
+        </ol>
+        <button id="btn-close-how-to-play" class="cyber-btn" style="margin-top:10px;">GOT IT</button>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         SETTINGS MODAL
+         ======================================================== -->
+    <div id="modal-settings" class="modal-overlay" style="display: none;">
+      <div class="modal-box glass-panel">
+        <h2 style="font-family:var(--font-racing);color:var(--neon-orange);">SETTINGS</h2>
+        <div>
+          <label style="display:block;margin-bottom:6px;">MASTER VOLUME</label>
+          <input id="settings-volume" type="range" min="0" max="1" step="0.05" value="0.6" style="width:100%;" />
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+          <input id="settings-mute" type="checkbox" id="mute-check" />
+          <label for="mute-check">Mute All Audio</label>
+        </div>
+        <button id="btn-close-settings" class="cyber-btn" style="margin-top:15px;">SAVE & CLOSE</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
